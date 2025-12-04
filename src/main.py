@@ -86,10 +86,11 @@ async def liveness_check() -> dict[str, str]:
     return {"status": "alive"}
 
 
-# API routes will be included here
-# from src.api.routes import scrape, enrich, score, emails, send, tracking, auth
-# app.include_router(scrape.router, prefix="/api", tags=["Scraping"])
-# ...
+# API routes
+from src.api.routes import companies_router, scrape_router
+
+app.include_router(scrape_router, prefix="/api")
+app.include_router(companies_router, prefix="/api")
 
 
 if __name__ == "__main__":

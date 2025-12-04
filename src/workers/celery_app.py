@@ -1,6 +1,7 @@
 """Celery application configuration."""
 
 from celery import Celery
+from celery.schedules import crontab
 
 from src.config import get_settings
 
@@ -11,8 +12,7 @@ celery_app = Celery(
     broker=settings.redis_url,
     backend=settings.redis_url,
     include=[
-        # Task modules will be added here as we build them
-        # "src.workers.scrape_tasks",
+        "src.workers.scrape_tasks",
         # "src.workers.enrich_tasks",
         # "src.workers.send_tasks",
         # "src.workers.reply_tasks",
@@ -35,10 +35,10 @@ celery_app.conf.update(
 # Beat schedule for periodic tasks
 celery_app.conf.beat_schedule = {
     # Scraping jobs - daily at 06:00
-    # "daily-scrape": {
-    #     "task": "src.workers.scrape_tasks.run_daily_scrape",
-    #     "schedule": crontab(hour=6, minute=0),
-    # },
+    "daily-scrape": {
+        "task": "src.workers.scrape_tasks.run_daily_scrape",
+        "schedule": crontab(hour=6, minute=0),
+    },
     # Enrichment - daily at 08:00
     # "daily-enrich": {
     #     "task": "src.workers.enrich_tasks.run_enrichment",

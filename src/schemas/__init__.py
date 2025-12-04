@@ -5,6 +5,7 @@ from src.schemas.company import (
     CompanyCreate,
     CompanyList,
     CompanyRead,
+    CompanyResponse,
     CompanyUpdate,
 )
 from src.schemas.email import (
@@ -27,6 +28,7 @@ from src.schemas.lead import (
     LeadCreate,
     LeadList,
     LeadRead,
+    LeadResponse,
     LeadUpdate,
     LeadWithCompany,
 )
@@ -56,12 +58,14 @@ __all__ = [
     "CompanyCreate",
     "CompanyUpdate",
     "CompanyRead",
+    "CompanyResponse",
     "CompanyList",
     # Lead
     "LeadBase",
     "LeadCreate",
     "LeadUpdate",
     "LeadRead",
+    "LeadResponse",
     "LeadList",
     "LeadWithCompany",
     # Email

@@ -79,3 +79,7 @@ class LeadWithCompany(LeadRead):
 
     company_name: str
     company_domain: str | None
+
+
+# Alias for API responses
+LeadResponse = LeadRead

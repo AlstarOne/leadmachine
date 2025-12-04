@@ -68,3 +68,7 @@ class CompanyList(BaseModel):
     source: CompanySource
     status: CompanyStatus
     created_at: datetime
+
+
+# Alias for API responses
+CompanyResponse = CompanyRead
