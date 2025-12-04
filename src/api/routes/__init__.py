@@ -5,6 +5,7 @@ from src.api.routes.enrich import router as enrich_router
 from src.api.routes.leads import router as leads_router
 from src.api.routes.score import router as score_router
 from src.api.routes.scrape import router as scrape_router
+from src.api.routes.send import router as send_router
 
 __all__ = [
     "companies_router",
@@ -13,4 +14,5 @@ __all__ = [
     "leads_router",
     "score_router",
     "scrape_router",
+    "send_router",
 ]

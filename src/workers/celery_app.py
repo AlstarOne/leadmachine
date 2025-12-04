@@ -14,7 +14,9 @@ celery_app = Celery(
     include=[
         "src.workers.scrape_tasks",
         "src.workers.enrich_tasks",
-        # "src.workers.send_tasks",
+        "src.workers.score_tasks",
+        "src.workers.email_tasks",
+        "src.workers.send_tasks",
         # "src.workers.reply_tasks",
     ],
 )
@@ -43,6 +45,11 @@ celery_app.conf.beat_schedule = {
     "daily-enrich": {
         "task": "src.workers.enrich_tasks.run_daily_enrichment",
         "schedule": crontab(hour=8, minute=0),
+    },
+    # Email sending - every 15 minutes during business hours (9-17 CET, Mon-Fri)
+    "business-hours-send": {
+        "task": "src.workers.send_tasks.run_business_hours_send",
+        "schedule": crontab(minute="*/15", hour="9-16", day_of_week="1-5"),
     },
     # Reply checking - every 30 minutes
     # "check-replies": {
