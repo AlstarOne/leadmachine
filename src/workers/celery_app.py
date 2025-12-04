@@ -17,7 +17,7 @@ celery_app = Celery(
         "src.workers.score_tasks",
         "src.workers.email_tasks",
         "src.workers.send_tasks",
-        # "src.workers.reply_tasks",
+        "src.workers.reply_tasks",
     ],
 )
 
@@ -52,8 +52,8 @@ celery_app.conf.beat_schedule = {
         "schedule": crontab(minute="*/15", hour="9-16", day_of_week="1-5"),
     },
     # Reply checking - every 30 minutes
-    # "check-replies": {
-    #     "task": "src.workers.reply_tasks.check_inbox",
-    #     "schedule": crontab(minute="*/30"),
-    # },
+    "check-replies": {
+        "task": "src.workers.reply_tasks.run_scheduled_reply_check",
+        "schedule": crontab(minute="*/30"),
+    },
 }
