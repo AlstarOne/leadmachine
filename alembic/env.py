@@ -9,6 +9,24 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from src.config import get_settings
 from src.database import Base
 
+# Import all models to register them with Base.metadata
+from src.models import (  # noqa: F401
+    Company,
+    CompanySource,
+    CompanyStatus,
+    Email,
+    EmailSequenceStep,
+    EmailStatus,
+    Event,
+    EventType,
+    Lead,
+    LeadClassification,
+    LeadStatus,
+    ScrapeJob,
+    ScrapeJobStatus,
+    User,
+)
+
 # this is the Alembic Config object
 config = context.config
 

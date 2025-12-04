@@ -13,6 +13,18 @@ COPY pyproject.toml poetry.lock* ./
 RUN poetry config virtualenvs.create false \
     && poetry install --no-interaction --no-ansi --no-root --only main
 
+# Test builder stage (includes dev dependencies)
+FROM python:3.12-slim as test-builder
+
+WORKDIR /app
+
+RUN pip install poetry==1.8.4
+
+COPY pyproject.toml poetry.lock* ./
+
+RUN poetry config virtualenvs.create false \
+    && poetry install --no-interaction --no-ansi --no-root
+
 # Production stage
 FROM python:3.12-slim as production
 
@@ -45,3 +57,26 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 
 # Run the application
 CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# Test stage
+FROM python:3.12-slim as test
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy installed packages from test-builder
+COPY --from=test-builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=test-builder /usr/local/bin /usr/local/bin
+
+# Copy application code
+COPY src/ ./src/
+COPY tests/ ./tests/
+COPY alembic/ ./alembic/
+COPY alembic.ini* ./
+COPY pyproject.toml ./
+
+CMD ["pytest", "tests/", "-v"]

@@ -1,5 +1,4 @@
-import asyncio
-from collections.abc import AsyncGenerator, Generator
+from collections.abc import AsyncGenerator
 from typing import Any
 
 import pytest
@@ -11,33 +10,39 @@ from src.config import Settings, get_settings
 from src.database import Base, get_db
 from src.main import app
 
+# Import all models to register them with Base.metadata
+from src.models import (  # noqa: F401
+    Company,
+    Lead,
+    Email,
+    Event,
+    ScrapeJob,
+    User,
+)
+
 
 def get_test_settings() -> Settings:
     """Get test settings with test database."""
+    import os
+    # Use environment variables for CI/Docker, fallback to localhost for local dev
+    db_host = os.getenv("TEST_DB_HOST", "db")
+    redis_host = os.getenv("TEST_REDIS_HOST", "redis")
     return Settings(
-        database_url="postgresql+asyncpg://leadmachine:testpassword@localhost:5432/leadmachine_test",
-        redis_url="redis://localhost:6379/0",
+        database_url=f"postgresql+asyncpg://leadmachine:password@{db_host}:5432/leadmachine_test",
+        redis_url=f"redis://{redis_host}:6379/0",
         jwt_secret="test-secret-key",
         openai_api_key="sk-test-key",
         debug=True,
     )
 
 
-@pytest.fixture(scope="session")
-def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
-    """Create an instance of the event loop for the test session."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
-
-
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def test_settings() -> Settings:
     """Get test settings."""
     return get_test_settings()
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture(scope="function")
 async def test_engine(test_settings: Settings):  # type: ignore[no-untyped-def]
     """Create test database engine."""
     engine = create_async_engine(
@@ -57,7 +62,7 @@ async def test_engine(test_settings: Settings):  # type: ignore[no-untyped-def]
     await engine.dispose()
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(scope="function")
 async def db_session(test_engine) -> AsyncGenerator[AsyncSession, None]:  # type: ignore[no-untyped-def]
     """Create a test database session."""
     async_session = async_sessionmaker(

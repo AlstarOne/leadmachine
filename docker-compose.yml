@@ -17,6 +17,7 @@ services:
         condition: service_healthy
     volumes:
       - ./src:/app/src
+      - ./alembic:/app/alembic
     restart: unless-stopped
 
   worker:
@@ -100,6 +101,25 @@ services:
       - maillogs:/var/log/mail
       - ./docker/mailserver/config:/tmp/docker-mailserver
     restart: unless-stopped
+
+  test:
+    build:
+      context: .
+      target: test
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://leadmachine:password@db:5432/leadmachine_test
+      - REDIS_URL=redis://redis:6379/0
+      - TEST_DB_HOST=db
+      - TEST_REDIS_HOST=redis
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - ./alembic:/app/alembic
 
 volumes:
   postgres_data:
