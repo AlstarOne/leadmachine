@@ -1,0 +1,61 @@
+[tool.poetry]
+name = "leadmachine"
+version = "0.1.0"
+description = "Lead acquisition workflow system with scraping, enrichment, scoring, personalization, and email automation"
+authors = ["AlstarOne"]
+readme = "README.md"
+packages = [{include = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.115.0"
+uvicorn = {extras = ["standard"], version = "^0.32.0"}
+sqlalchemy = {extras = ["asyncio"], version = "^2.0.0"}
+asyncpg = "^0.30.0"
+alembic = "^1.14.0"
+pydantic = "^2.10.0"
+pydantic-settings = "^2.6.0"
+celery = {extras = ["redis"], version = "^5.4.0"}
+redis = "^5.2.0"
+httpx = "^0.28.0"
+playwright = "^1.49.0"
+beautifulsoup4 = "^4.12.0"
+openai = "^1.56.0"
+aiosmtplib = "^3.0.0"
+aioimaplib = "^2.0.0"
+python-jose = {extras = ["cryptography"], version = "^3.3.0"}
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+python-multipart = "^0.0.17"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.0"
+pytest-asyncio = "^0.24.0"
+pytest-cov = "^6.0.0"
+httpx = "^0.28.0"
+factory-boy = "^3.3.0"
+faker = "^33.0.0"
+responses = "^0.25.0"
+ruff = "^0.8.0"
+mypy = "^1.13.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-v --tb=short"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+ignore_missing_imports = true

@@ -1,0 +1,166 @@
+services:
+  api:
+    image: ghcr.io/alstarone/leadmachine:latest
+    labels:
+      - traefik.enable=true
+      # API routes
+      - traefik.http.routers.leadmachine-api.rule=Host(`lm.allardvolker.nl`) && PathPrefix(`/api`)
+      - traefik.http.routers.leadmachine-api.tls=true
+      - traefik.http.routers.leadmachine-api.tls.certresolver=letsencrypt
+      - traefik.http.routers.leadmachine-api.entrypoints=websecure
+      - traefik.http.services.leadmachine-api.loadbalancer.server.port=8000
+      # Health endpoints
+      - traefik.http.routers.leadmachine-health.rule=Host(`lm.allardvolker.nl`) && PathPrefix(`/health`)
+      - traefik.http.routers.leadmachine-health.tls=true
+      - traefik.http.routers.leadmachine-health.tls.certresolver=letsencrypt
+      - traefik.http.routers.leadmachine-health.entrypoints=websecure
+      # Tracking endpoints (no /api prefix)
+      - traefik.http.routers.leadmachine-tracking.rule=Host(`lm.allardvolker.nl`) && PathPrefix(`/t`)
+      - traefik.http.routers.leadmachine-tracking.tls=true
+      - traefik.http.routers.leadmachine-tracking.tls.certresolver=letsencrypt
+      - traefik.http.routers.leadmachine-tracking.entrypoints=websecure
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - SMTP_HOST=mailserver
+      - SMTP_PORT=25
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - IMAP_HOST=mailserver
+      - IMAP_PORT=993
+      - IMAP_USER=${IMAP_USER}
+      - IMAP_PASSWORD=${IMAP_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - TRACKING_BASE_URL=https://lm.allardvolker.nl
+      - DEBUG=false
+    networks:
+      - traefik
+      - internal
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    image: ghcr.io/alstarone/leadmachine-frontend:latest
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.leadmachine-frontend.rule=Host(`lm.allardvolker.nl`)
+      - traefik.http.routers.leadmachine-frontend.tls=true
+      - traefik.http.routers.leadmachine-frontend.tls.certresolver=letsencrypt
+      - traefik.http.routers.leadmachine-frontend.entrypoints=websecure
+      - traefik.http.services.leadmachine-frontend.loadbalancer.server.port=80
+      - traefik.http.routers.leadmachine-frontend.priority=1
+    networks:
+      - traefik
+    restart: unless-stopped
+
+  worker:
+    image: ghcr.io/alstarone/leadmachine:latest
+    command: celery -A src.workers.celery_app worker -l info --concurrency=4
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - SMTP_HOST=mailserver
+      - SMTP_PORT=25
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - IMAP_HOST=mailserver
+      - IMAP_PORT=993
+      - IMAP_USER=${IMAP_USER}
+      - IMAP_PASSWORD=${IMAP_PASSWORD}
+    networks:
+      - internal
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  beat:
+    image: ghcr.io/alstarone/leadmachine:latest
+    command: celery -A src.workers.celery_app beat -l info
+    environment:
+      - REDIS_URL=${REDIS_URL}
+    networks:
+      - internal
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  mailserver:
+    image: ghcr.io/docker-mailserver/docker-mailserver:latest
+    hostname: mail.lm.allardvolker.nl
+    domainname: lm.allardvolker.nl
+    ports:
+      - "25:25"
+      - "587:587"
+      - "993:993"
+    environment:
+      - ENABLE_SPAMASSASSIN=0
+      - ENABLE_CLAMAV=0
+      - ENABLE_FAIL2BAN=1
+      - ENABLE_POSTGREY=0
+      - ONE_DIR=1
+      - DMS_DEBUG=0
+      - SSL_TYPE=letsencrypt
+      - PERMIT_DOCKER=network
+    volumes:
+      - maildata:/var/mail
+      - mailstate:/var/mail-state
+      - maillogs:/var/log/mail
+      - ./docker/mailserver/config:/tmp/docker-mailserver
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    networks:
+      - internal
+    restart: unless-stopped
+
+networks:
+  traefik:
+    external: true
+  internal:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  maildata:
+  mailstate:
+  maillogs:
