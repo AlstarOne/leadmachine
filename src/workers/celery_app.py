@@ -13,7 +13,7 @@ celery_app = Celery(
     backend=settings.redis_url,
     include=[
         "src.workers.scrape_tasks",
-        # "src.workers.enrich_tasks",
+        "src.workers.enrich_tasks",
         # "src.workers.send_tasks",
         # "src.workers.reply_tasks",
     ],
@@ -40,10 +40,10 @@ celery_app.conf.beat_schedule = {
         "schedule": crontab(hour=6, minute=0),
     },
     # Enrichment - daily at 08:00
-    # "daily-enrich": {
-    #     "task": "src.workers.enrich_tasks.run_enrichment",
-    #     "schedule": crontab(hour=8, minute=0),
-    # },
+    "daily-enrich": {
+        "task": "src.workers.enrich_tasks.run_daily_enrichment",
+        "schedule": crontab(hour=8, minute=0),
+    },
     # Reply checking - every 30 minutes
     # "check-replies": {
     #     "task": "src.workers.reply_tasks.check_inbox",

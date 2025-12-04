@@ -87,10 +87,12 @@ async def liveness_check() -> dict[str, str]:
 
 
 # API routes
-from src.api.routes import companies_router, scrape_router
+from src.api.routes import companies_router, enrich_router, leads_router, scrape_router
 
 app.include_router(scrape_router, prefix="/api")
 app.include_router(companies_router, prefix="/api")
+app.include_router(enrich_router, prefix="/api")
+app.include_router(leads_router, prefix="/api")
 
 
 if __name__ == "__main__":
