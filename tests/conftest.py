@@ -25,10 +25,13 @@ def get_test_settings() -> Settings:
     """Get test settings with test database."""
     import os
     # Use environment variables for CI/Docker, fallback to localhost for local dev
-    db_host = os.getenv("TEST_DB_HOST", "db")
-    redis_host = os.getenv("TEST_REDIS_HOST", "redis")
+    # Note: password and port must match what postgres was initialized with in docker-compose
+    db_host = os.getenv("TEST_DB_HOST", "localhost")
+    db_port = os.getenv("TEST_DB_PORT", "5433")  # Docker maps to 5433 on host
+    db_password = os.getenv("TEST_DB_PASSWORD", "password")
+    redis_host = os.getenv("TEST_REDIS_HOST", "localhost")
     return Settings(
-        database_url=f"postgresql+asyncpg://leadmachine:password@{db_host}:5432/leadmachine_test",
+        database_url=f"postgresql+asyncpg://leadmachine:{db_password}@{db_host}:{db_port}/leadmachine_test",
         redis_url=f"redis://{redis_host}:6379/0",
         jwt_secret="test-secret-key",
         openai_api_key="sk-test-key",
